@@ -31,22 +31,45 @@ function getDouData() {
     });
 }
 function getJoobleData() {
-    var url = "http://ua.jooble.org/%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%B0/%D0%9A%D0%B8%D0%B5%D0%B2?p=1";
+    var vacancies=[];
+    function processPage(page) {
+        //var url = "http://ua.jooble.org/%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%B0/%D0%9A%D0%B8%D0%B5%D0%B2?p=" + page;
+        var url = "http://ua.jooble.org/%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%B0-junior/%D0%9A%D0%B8%D0%B5%D0%B2?p="+page;
 
-    request(url, function (error, response, body) {
-        if (!error) {
-            var $ = cheerio.load(body),
-                vacancies = $(".vacancy-item h2");
-            vacancies.each(function (i, vacancy) {
-                    // get the href attribute of each link
-                    console.log($(vacancy).text());
+        request(url, function (error, response, body) {
+            if (!error) {
+                var $ = cheerio.load(body),
+                    $vacancies = $(".vacancy-item h2");
+                var results=$vacancies.length;
+                //console.log(page, results);
+
+                $vacancies.each(function (i, vacancy) {
+                    var title = $(vacancy).text();
+                    console.log( title);
+                    vacancies.push(title);
+                    fs.writeFile('output.csv', title+"\n", function (err) {});
                 });
-                //console.log("It’s vacancies" + vacancies);
+
+                if (results>0 ) { //remove &&page<3 to scan all pages  && page<3
+                    //console.log('let\'s try more');
+                    processPage(page+1);
+                }
+                else {
+                    //fs.writeFile('output.json', JSON.stringify(vacancies), function (err) {
+                    //    console.log('File successfully written! - Check your project directory for the output.json file');
+                    //});
+
+                    //console.log(vacancies);
+                }
             }
-        else {
+            else {
                 console.log("We’ve encountered an error: " + error);
             }
         });
+    }
+
+    processPage(1);
+
     }
 
     function getData2() {
@@ -76,9 +99,9 @@ function getJoobleData() {
                 })
             }
 
-            fs.writeFile('output.json', JSON.stringify(json, null, 4), function (err) {
-                console.log('File successfully written! - Check your project directory for the output.json file');
-            });
+            //fs.writeFile('output.json', JSON.stringify(json, null, 4), function (err) {
+            //    console.log('File successfully written! - Check your project directory for the output.json file');
+            //});
         });
     }
 
