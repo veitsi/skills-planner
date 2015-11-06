@@ -1,16 +1,16 @@
 var fs = require('fs');
 var request = require('request');
 var cheerio = require('cheerio');
-var sources = {
-    'rabota.ua': function () {
-    },
-    'work.ua': function () {
-    },
-    'rabotaplus.ua': function () {
-    },
-    'HeadHunter.ua': function () {
-    }
-}
+//var sources = {
+//    'rabota.ua': function () {
+//    },
+//    'work.ua': function () {
+//    },
+//    'rabotaplus.ua': function () {
+//    },
+//    'HeadHunter.ua': function () {
+//    }
+//}
 
 function getData1() {
     var url = "http://www.wunderground.com/cgi-bin/findweather/getForecast?&query=" + 02888;
@@ -42,69 +42,59 @@ function getDouData() {
 }
 function getJoobleData() {
     var vacancies = [];
+    var totalVacancies=0;
+    var sources={};
 
-    function processLocalPage() {
-        //var $ = cheerio.load(body);
+    function processLocalPage(page) {
+        page=page||1;
         var $ = cheerio.load(fs.readFileSync('/home/jsdev/skills-planner/cache/jooblep1.html'));
-        var $vacancies = $(".vacancy-item");
-        var results = $vacancies.length;
-        //console.log(page, results);
 
-        //$('.vacancy-item h2').each(function (i, $title) {
-        //    var title = $($title).text();
-        //    console.log(title);
-        //    //vacancies.push(title);
-        //    //fs.writeFile('output.csv', title + "\n", function (err) { });
-        //});
-        //$('.vacancy-item .date-and-source').each(function (i, source) {
-        //    console.log($(source).children().first().text());
-        //});
+        console.log(page, $(".vacancy-item").length);
         $('.vacancy-item').each(function (i, vacancy) {
             console.log($(vacancy).find('h2').text());
             console.log($(vacancy).find('.company span').text());
             console.log($(vacancy).find('.date-and-source').children().first().text());
             console.log($(vacancy).find('a').attr('href'));
         });
-
         //if (results > 0 && page<3) processPage(page + 1);  //task to scan next page, remove &&page<3 to scan all pages
-
     }
 
-    function processPage(page) {
+    function processPages(page) {
         page = page || 1;
         //var url = "http://ua.jooble.org/%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%B0/%D0%9A%D0%B8%D0%B5%D0%B2?p=" + page;
-        var url = "http://ua.jooble.org/%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%B0-junior/%D0%9A%D0%B8%D0%B5%D0%B2?p=" + page;
-        //var url='file:///home/jsdev/skills-planner/cache/jooblep1.html';
+        var url = "http://ua.jooble.org/%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%B0-javascript-junior/%D0%9A%D0%B8%D0%B5%D0%B2?p=" + page;
 
         request(url, function (error, response, body) {
             if (!error) {
-                //var $ = cheerio.load(body);
-                var $ = cheerio.load(fs.readFileSync('/home/jsdev/skills-planner/cache/jooblep1.html'));
-                var $vacancies = $(".vacancy-item");
-                var results = $vacancies.length;
-                //console.log(page, results);
-
-                $('.vacancy-item h2').each(function (i, vacancy) {
-                    var title = $(vacancy).text();
-                    console.log(title);
-                    //vacancies.push(title);
-                    //fs.writeFile('output.csv', title + "\n", function (err) { });
-                });
-                $('.vacancy-item .date-and-source span').each(function (i, source) {
-                    console.log($(source).first().text());
+                var $ = cheerio.load(body);
+                totalVacancies+=$(".vacancy-item").length;
+                console.log(page, $(".vacancy-item").length);
+                $('.vacancy-item').each(function (i, vacancy) {
+                    //console.log($(vacancy).find('h2').text());
+                    //console.log($(vacancy).find('.company span').text());
+                    var source=$(vacancy).find('.date-and-source').children().first().text();
+                    //console.log(source);
+                    if (sources.hasOwnProperty(source)) {sources[source]+=1} else {sources[source]=1;};
+                    //console.log($(vacancy).find('a').attr('href'));
                 });
 
-                //if (results > 0 && page<3) processPage(page + 1);  //task to scan next page, remove &&page<3 to scan all pages
-
-
+                if ( $(".vacancy-item").length===20) {//task to scan next page, remove &&page<3 to scan all pages
+                    processPages(page + 1);
+                }
+                else{
+                    console.log('sources ',sources);
+                }
             }
             else {
                 console.log("We’ve encountered an error: " + error);
             }
         });
     }
+    processPages();
+}
 
-    processLocalPage();
+function getDataFromLocalVacancy(){
+
 }
 
 function getWorkdotUaVacancyDescription(url) {
